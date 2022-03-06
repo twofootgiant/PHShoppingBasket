@@ -144,7 +144,18 @@ namespace ShoppingBasket
 
         public long GetTotalDiscountsInPence()
         {
-            return discounts.Aggregate(0L,
+            // Note: This design requires that each discount object iterate through the list of basket items.
+            // This would be inefficient if lots of discounts need to be applied or if the basket size was really large
+            // or if the total cost is required in anything like real time. In those cases, an event driven approach may be more appropriate.
+            // Each discount object would listen for changes to the basket collection (maybe using an ObservableCollection or similar)
+            // and recalculate it's discount value as needed.
+
+            // Improvement : At present all the discount types are independent of each other
+            // (i.e. there is no discount type that is only applicable after some or all other discounts have been applied).
+            // This means that they can all run in parallel (multi threaded) and still produce the same result
+            // If this requirement were to change, this method would have be more intelligent, maybe requiring the creation of a
+            // dedicated discount processor class
+            return discounts.AsParallel().Aggregate(0L,
                 (current, discount) =>
                     current + discount.Value.GetTotalDiscountInPence());
         }
